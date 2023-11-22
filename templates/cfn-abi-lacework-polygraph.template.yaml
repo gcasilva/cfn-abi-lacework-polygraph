@@ -573,6 +573,11 @@ Resources:
         - submodules/lacework-control-tower-cfn/lambda_functions/packages/setup/LaceworkCTSetup3.2.0.zip
         - submodules/lacework-control-tower-cfn/lambda_functions/packages/account/LaceworkCTAccount3.2.0.zip
         - submodules/lacework-control-tower-cfn/lambda_functions/packages/auth/LaceworkCTAuth3.2.0.zip
+        - submodules/lacework-control-tower-cfn/templates/cfn-abi-control-tower-integration.template.yaml
+        - submodules/lacework-control-tower-cfn/templates/control-tower-integration.template.yaml
+        - submodules/lacework-control-tower-cfn/templates/lacework-aws-cfg-member.template.yaml
+        - submodules/lacework-control-tower-cfn/templates/lacework-aws-ct-audit.template.yaml
+        - submodules/lacework-control-tower-cfn/templates/lacework-aws-ct-log.template.yaml
 
   CopyZipsRole:
     Type: AWS::IAM::Role
