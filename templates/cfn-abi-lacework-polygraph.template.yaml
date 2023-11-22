@@ -361,12 +361,326 @@ Parameters:
     MaxValue: 30
     Type: Number
 Resources:
+  rOrgIdGdLambdaCustomResource:
+    Type: Custom::LambdaCustomResource
+    Version: '1.0'
+    Properties:
+      ServiceToken: !GetAtt rOrgIdGdLambdaFunction.Arn
+
+  rOrgIdGdLambdaFunction:
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: Lambda role provides access to CloudWatch Logs
+          - id: W89
+            reason: Lambda does not need to communicate with VPC resources.
+          - id: W92
+            reason: Lambda does not need reserved concurrent executions.
+      checkov:
+        skip:
+          - id: CKV_AWS_115
+            comment: Lambda does not need reserved concurrent executions.
+          - id: CKV_AWS_116
+            comment: DLQ not needed, as Lambda function only triggered by CloudFormation events.
+          - id: CKV_AWS_117
+            comment: Lambda does not need to communicate with VPC resources.
+          - id: CKV_AWS_173
+            comment: Environment variables are not sensitive.
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: get-organization-id
+      Description: Get AWS Organization ID
+      Handler: index.lambda_handler
+      Role: !GetAtt rOrgIdGdLambdaRole.Arn
+      Runtime: python3.9
+      Timeout: 60
+      Code:
+        ZipFile: |
+          # type: ignore
+          """Custom Resource to get AWS Organization ID.
+
+          Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+          SPDX-License-Identifier: MIT-0
+          """
+          import logging
+          import os
+
+          import boto3
+          import cfnresponse
+
+          LOGGER = logging.getLogger(__name__)
+          log_level: str = os.environ.get("LOG_LEVEL", "ERROR")
+          LOGGER.setLevel(log_level)
+
+
+          def get_org_id():
+              """Get AWS Organization ID.
+
+              Returns:
+                  Response data for custom resource
+              """
+              management_account_session = boto3.Session()
+              org_client = management_account_session.client("organizations")
+              response = org_client.describe_organization()["Organization"]
+              LOGGER.debug({"API_Call": "organizations:DescribeOrganization", "API_Response": response})
+              return {"OrganizationId": response["Id"]}
+
+
+          def lambda_handler(event, context):
+              """Lambda Handler.
+
+              Args:
+                  event: event data
+                  context: runtime information
+              """
+              try:
+                  data = get_org_id()
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, data, data["OrganizationId"])
+              except Exception:
+                  LOGGER.exception("Unexpected!")
+                  reason = f"See the details in CloudWatch Log Stream: '{context.log_group_name}'"
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, data["OrganizationId"], reason=reason)
+
+  rOrgIdGdLambdaLogGroup:
+    DeletionPolicy: Retain
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    Properties:
+      RetentionInDays: 400
+
+  rOrgIdGdLambdaRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: Allow * in resource when required
+          - id: W28
+            reason: The role name is defined to identify automation resources
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Policies:
+        - PolicyName: org-id
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: OrganizationRead
+                Effect: Allow
+                Action: organizations:DescribeOrganization
+                Resource: '*'
+        - PolicyName: CloudWatchLogGroup
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/get-organization-id:log-stream:*
+
+  rStagingS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W35
+            reason: S3 access logs intentionally not enabled
+      checkov:
+        skip:
+          - id: CKV_AWS_18
+            comment: S3 access logs intentionally not enabled
+    Properties:
+      BucketName: !Sub ${pSRAStagingS3KeyPrefix}-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+
+  rStagingS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: F16
+            reason: GetObject is restricted to AWS accounts within the AWS Organization
+    Properties:
+      Bucket: !Ref rStagingS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowDeploymentRoleGetObject
+            Effect: Allow
+            Action: s3:GetObject
+            Principal: '*'
+            Resource: !Sub arn:${AWS::Partition}:s3:::${rStagingS3Bucket}/*
+            Condition:
+              ArnLike:
+                aws:PrincipalArn:
+                  - !Sub arn:${AWS::Partition}:iam::*:role/stacksets-exec-*
+
+          - Sid: DenyExternalPrincipals
+            Effect: Deny
+            Action: 's3:*'
+            Principal: '*'
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${rStagingS3Bucket}
+              - !Sub arn:${AWS::Partition}:s3:::${rStagingS3Bucket}/*
+            Condition:
+              StringNotEquals:
+                aws:PrincipalOrgID: !GetAtt rOrgIdGdLambdaCustomResource.OrganizationId
+
+          - Sid: SecureTransport
+            Effect: Deny
+            Action: 's3:*'
+            Principal: '*'
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${rStagingS3Bucket}
+              - !Sub arn:${AWS::Partition}:s3:::${rStagingS3Bucket}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: False
+
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
+      DestBucket: !Ref 'rStagingS3Bucket'
+      SourceBucket: !Ref 'pSRASourceS3BucketName'
+      Prefix: !Sub '${pSRAStagingS3KeyPrefix}/'
+      Objects:
+        - submodules/lacework-control-tower-cfn/lambda_functions/packages/setup/LaceworkCTSetup3.2.0.zip
+        - submodules/lacework-control-tower-cfn/lambda_functions/packages/account/LaceworkCTAccount3.2.0.zip
+        - submodules/lacework-control-tower-cfn/lambda_functions/packages/auth/LaceworkCTAuth3.2.0.zip
+
+  CopyZipsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectTagging
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${pSRASourceS3BucketName}/'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${pSRASourceS3BucketName}/${pSRAStagingS3KeyPrefix}/*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:PutObjectTagging
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${rStagingS3Bucket}/'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${rStagingS3Bucket}/${pSRAStagingS3KeyPrefix}/*'
+
+  CopyZipsFunction:
+    Type: AWS::Lambda::Function
+    # checkov:skip=CKV_AWS_117:Ensure that AWS Lambda function is configured inside a VPC
+    # checkov:skip=CKV_AWS_115:Ensure that AWS Lambda function is configured for function-level concurrent execution limit
+    # checkov:skip=CKV_AWS_116:Ensure that AWS Lambda function is configured for a Dead Letter Queue(DLQ)
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt 'CopyZipsRole.Arn'
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {
+                      'Bucket': source_bucket,
+                      'Key': key
+                  }
+                  print(('copy_source: %s' % copy_source))
+                  print(('dest_bucket = %s'%dest_bucket))
+                  print(('key = %s' %key))
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                        Key=key)
+
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function
+              # is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis()
+                        / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+
+              print(('Received event: %s' % json.dumps(event)))
+              status = cfnresponse.SUCCESS
+              try:
+                  source_bucket = event['ResourceProperties']['SourceBucket']
+                  dest_bucket = event['ResourceProperties']['DestBucket']
+                  prefix = event['ResourceProperties']['Prefix']
+                  objects = event['ResourceProperties']['Objects']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(dest_bucket, prefix, objects)
+                  else:
+                      copy_objects(source_bucket, dest_bucket, prefix, objects)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  cfnresponse.send(event, context, status, {}, None)
   LaceworkControlTowerCfn:
     Type: AWS::CloudFormation::Stack
+    DependsOn: CopyZips
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/submodules/lacework-control-tower-cfn/templates/cfn-abi-control-tower-integration.template.yaml"
       Parameters:
-        S3BucketName: !Ref pSRASourceS3BucketName
+        S3BucketName: !Ref rStagingS3Bucket
         S3KeyPrefix: !Ref pSRAStagingS3KeyPrefix
         LaceworkURL: !Ref LaceworkURL
         LaceworkOrgSubAccountNames: !Ref LaceworkOrgSubAccountNames
