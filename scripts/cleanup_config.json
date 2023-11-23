@@ -147,6 +147,10 @@
         "Account" : "audit"
     },
     {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-management-account-parameters-lambda"
+    },
+    {
         "Type" : "STACK_SET",
         "Filter" : "sra-stackset-execution-role"
     },

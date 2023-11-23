@@ -463,7 +463,12 @@ def delete_iam_role(item):
         for policy in policies['AttachedPolicies']:
             print(f"..Detaching policy {policy['PolicyArn']} from role {role_name}.")
             iam_session.detach_role_policy(RoleName=role_name, PolicyArn=policy['PolicyArn'])
+        policies = iam_session.list_role_policies(RoleName=role_name)
+        for policy in policies['PolicyNames']:
+            print(f"..Deleting inline policy {policy} from role {role_name}.")
+            iam_session.delete_role_policy(RoleName=role_name, PolicyName=policy)
         print(f"....Deleting role {role_name}.")
+        iam_session
         iam_session.delete_role(RoleName=role_name)
     except Exception as exe:
         if exe.response['Error']['Code'] == 'NoSuchEntity':
