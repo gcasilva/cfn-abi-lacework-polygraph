@@ -151,6 +151,26 @@
         "Filter" : "sra-management-account-parameters-lambda"
     },
     {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-helper-guardduty-lambda-role"
+    },
+    {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-guardduty-codebuild-role"
+    },
+    {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-guardduty-codebuild-lambda-role"
+    },
+    {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-helper-guardduty-codebuild-role"
+    },
+    {
+        "Type" : "IAM_ROLE",
+        "Filter" : "sra-helper-guardduty-codebuild-lambda-role"
+    },
+    {
         "Type" : "STACK_SET",
         "Filter" : "sra-stackset-execution-role"
     },
