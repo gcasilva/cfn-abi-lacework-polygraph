@@ -468,7 +468,6 @@ def delete_iam_role(item):
             print(f"..Deleting inline policy {policy} from role {role_name}.")
             iam_session.delete_role_policy(RoleName=role_name, PolicyName=policy)
         print(f"....Deleting role {role_name}.")
-        iam_session
         iam_session.delete_role(RoleName=role_name)
     except Exception as exe:
         if exe.response['Error']['Code'] == 'NoSuchEntity':
