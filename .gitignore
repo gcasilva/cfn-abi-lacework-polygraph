@@ -186,3 +186,8 @@ lambda.zip
 
 # Visual Studio Code IDE
 .vscode/
+
+# Scoutsuite files
+/scoutsuite-report/
+scoutsuite-report.zip
+scoutsuite_sysout.txt
