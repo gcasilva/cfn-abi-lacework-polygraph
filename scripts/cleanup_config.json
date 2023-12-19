@@ -188,5 +188,9 @@
     {
         "Type" : "STACK",
         "Filter" : "tCaT-cfn-abi-lacework-polygraph-"
+    },
+    {
+        "Type" : "STACK",
+        "Filter" : "Lambda-S3-PresignedURL"
     }
 ]
