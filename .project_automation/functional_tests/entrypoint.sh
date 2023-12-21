@@ -26,31 +26,6 @@ cleanup_all_regions() {
     done
 }
 
-run_scoutsuite() {
-    #Create Scoutsuite security scan custom rule
-    python3 .project_automation/functional_tests/scoutsuite/create-scoutsuite-custom-rule.py
-    # Execute Scoutsuite security scan
-    scout aws -r us-east-1 --ruleset .project_automation/functional_tests/scoutsuite/abi-scoutsuite-custom-ruleset.json --no-browser --max-rate 5 --max-workers 5 -f
-    # Upload Scoutsuite security scan results to S3 bucket named scoutsuite-results-aws-AWS-ACCOUNT-ID
-    python3 .project_automation/functional_tests/scoutsuite/process-scoutsuite-report.py
-    # Delete taskcat e2e test resources
-    taskcat test clean ALL
-    process_scoutsuite_report
-}
-
-process_scoutsuite_report() {
-    # Check Scoutsuite security scan result for Danger level findings (Non-0 exit code)
-    scoutsuite_sysout_result=$(cat scoutsuite_sysout.txt)
-    scoutsuite_s3_filename=$(cat scoutsuite_s3_filename.txt)
-    rm scoutsuite_sysout.txt
-    rm scoutsuite_s3_filename.txt
-    if [ "$scoutsuite_sysout_result" -ne 0 ]; then       
-        # The value is non-zero, indicating Scoutsuite report needs to be checked for security issues
-        echo "Scoutsuite report contains security issues. For details please check the log messages above or the file $scoutsuite_s3_filename in the S3 bucket named scoutsuite-results-aws-$AWS_ACCOUNT_ID in the AWS test account provided by the ABI team."
-        exit 1 
-    fi
-}
-
 run_test() {
     echo "Running e2e test"
     cleanup_all_regions
@@ -58,7 +33,7 @@ run_test() {
     unset AWS_DEFAULT_REGION
     echo $AWS_DEFAULT_REGION
     taskcat test run -n
-    run_scoutsuite
+    .project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 # Run taskcat e2e test
 run_test
