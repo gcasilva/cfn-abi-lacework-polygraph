@@ -27,16 +27,16 @@ cleanup_all_regions() {
 }
 
 run_test() {
-    echo "Running e2e test"
+    echo "Running e2e test: $1"
     cleanup_all_regions
     echo $AWS_DEFAULT_REGION
     unset AWS_DEFAULT_REGION
     echo $AWS_DEFAULT_REGION
-    taskcat test run -n
+    taskcat test run -n -t $1
     .project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 # Run taskcat e2e test
-run_test
+run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
 
 ## Executing ash tool
 
