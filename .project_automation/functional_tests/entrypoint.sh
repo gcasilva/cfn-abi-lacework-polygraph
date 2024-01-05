@@ -8,6 +8,9 @@ PROJECT_TYPE_PATH=${BASE_PATH}/projecttype
 
 cd ${PROJECT_PATH}
 
+# Retrieve the AWS account ID and store it in a variable
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+
 cleanup_region() {
     echo "Cleanup running in region: $1"
     export AWS_DEFAULT_REGION=$1
@@ -24,15 +27,16 @@ cleanup_all_regions() {
 }
 
 run_test() {
-    echo "Running e2e test"
+    echo "Running e2e test: $1"
     cleanup_all_regions
     echo $AWS_DEFAULT_REGION
     unset AWS_DEFAULT_REGION
     echo $AWS_DEFAULT_REGION
-    taskcat test run
+    taskcat test run -n -t $1
+    .project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 # Run taskcat e2e test
-run_test
+run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
 
 ## Executing ash tool
 
