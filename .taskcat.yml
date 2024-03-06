@@ -35,12 +35,8 @@ tests:
       pLogArchiveAccountId: $[taskcat_ssm_/nonct/log-archive-account-id]
       pSecurityAccountId: $[taskcat_ssm_/nonct/audit-account-id]
       pGovernedRegions: 'us-east-1'
-      pAdminRoleName: 'AWSCloudFormationStackSetAdministrationRole'
-      pExecRoleName: 'AWSCloudFormationStackSetExecutionRole'
-      LaceworkAccount: 'laceworkalliances'
-      OrganizationID: 'o-5py8cuszlp'
-      OrganizationalUnit: 'ou-aty9-5t69fbhr'
-      ResourceNamePrefix: 'lw-stackset'
-      ExistingCloudTrail: 'organization-trail'
+      LaceworkAccount: $[taskcat_ssm_/lacework/LaceworkAccount]
+      OrganizationID: $[taskcat_ssm_/lacework/OrganizationID]
+      OrganizationalUnit: $[taskcat_ssm_/lacework/OrgOrganizationalUnitanizationID]
+      ExistingCloudTrail: $[taskcat_ssm_/lacework/ExistingCloudTrail]
       KMSKeyIdentifierARN: $[taskcat_ssm_/lacework/CloudTrailKMSARN]
-      LogAccountName: 'Log Archive'

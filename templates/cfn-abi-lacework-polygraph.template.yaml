@@ -765,8 +765,8 @@ Resources:
         AdministrationRoleARN: 
           !If
             - cControlTowerEnabled
-            - !Join [':', ['arn:aws:iam:', !Ref 'AWS::AccountId', 'role/service-role/AWSControlTowerStackSetRole']]
-            - !Join [':', ['arn:aws:iam:', !Ref 'AWS::AccountId', !Sub 'role/${pAdminRoleName}']]
+            - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/service-role/AWSControlTowerStackSetRole
+            - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${pAdminRoleName} 
         ExecutionRoleName: 
           !If
             - cControlTowerEnabled
@@ -833,11 +833,7 @@ Resources:
       - CfnAbiAwsSecurityHub
       - CfnAbiAmazonGuardDuty
     Properties:
-      TemplateURL: 
-        !If
-              - cControlTowerEnabled
-              - !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/templates/cfn-abi-lacework-sec-hub-ingest.template.yaml"
-              - !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/templates/cfn-abi-lacework-sec-hub-ingest.template.yaml"
+      TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/templates/cfn-abi-lacework-sec-hub-ingest.template.yaml"
       Parameters:
         LaceworkAccount: !Select [ 0, !Split [ '.', !Ref LaceworkURL ] ]
         ExternalID: !Select [ 4, !Split [ '-', !Select [ 2, !Split [ '/', !Ref AWS::StackId ] ] ] ]
