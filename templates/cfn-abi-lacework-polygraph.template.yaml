@@ -5,7 +5,7 @@ Metadata:
     ParameterGroups:
       - Label:
           default: General Properties
-          Parameters:
+        Parameters:
             - pSRASourceS3BucketName
             - pSRAStagingS3KeyPrefix
             - pSRAS3BucketRegion
