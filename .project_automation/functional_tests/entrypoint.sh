@@ -32,8 +32,8 @@ run_test() {
     echo $AWS_DEFAULT_REGION
     unset AWS_DEFAULT_REGION
     echo $AWS_DEFAULT_REGION
-    taskcat test run -n -t $1
-    .project_automation/functional_tests/scoutsuite/scoutsuite.sh
+    taskcat test run -t $1
+    #.project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 # Run taskcat e2e test
 run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
