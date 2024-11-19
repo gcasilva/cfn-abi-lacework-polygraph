@@ -5,7 +5,7 @@ Metadata:
     ParameterGroups:
       - Label:
           default: General Properties
-          Parameters:
+        Parameters:
             - pSRASourceS3BucketName
             - pSRAStagingS3KeyPrefix
             - pSRAS3BucketRegion
@@ -393,7 +393,7 @@ Resources:
       Description: Get AWS Organization ID
       Handler: index.lambda_handler
       Role: !GetAtt rOrgIdGdLambdaRole.Arn
-      Runtime: python3.9
+      Runtime: python3.11
       Timeout: 60
       Code:
         ZipFile: |
@@ -621,7 +621,7 @@ Resources:
     Properties:
       Description: Copies objects from a source S3 bucket to a destination
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: python3.11
       Role: !GetAtt 'CopyZipsRole.Arn'
       Timeout: 240
       Code:
