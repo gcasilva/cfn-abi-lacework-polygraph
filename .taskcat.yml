@@ -20,6 +20,6 @@ tests:
       pDisableGuardDuty: 'Yes'
       pControlTower: 'true'
       pGovernedRegions: ct-regions
-      pSecurityAccountId: 981870611000
-      pLogArchiveAccountId: 343557907812
+      pSecurityAccountId: $[taskcat_ssm_/sra/control-tower/audit-account-id]
+      pLogArchiveAccountId: $[taskcat_ssm_/sra/control-tower/log-archive-account-id]
       pCreateAWSControlTowerExecutionRole: 'true'
