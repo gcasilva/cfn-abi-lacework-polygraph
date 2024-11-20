@@ -60,11 +60,14 @@ Metadata:
           - pLambdaLogGroupRetention
           - pLambdaLogGroupKmsKey
           - pLambdaLogLevel
-
       - Label:
           default: EventBridge Rule Properties
         Parameters:
           - pComplianceFrequency
+      - Label:
+          default: Landing Zone
+        Parameters:
+          - pCreateAWSControlTowerExecutionRole
 
     ParameterLabels:
       # General Properties
@@ -147,6 +150,9 @@ Metadata:
       # EventBridge Rule Properties
       pComplianceFrequency:
         default: Frequency to Check for Organizational Compliance
+      # Landing Zone
+      pCreateAWSControlTowerExecutionRole:
+        default: AWS Control Tower Execution Role creation parameter
 Parameters:
   # General Properties
   pSRASourceS3BucketName:
@@ -360,6 +366,12 @@ Parameters:
     MinValue: 1
     MaxValue: 30
     Type: Number
+  # Landing Zone
+  pCreateAWSControlTowerExecutionRole:
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+    Description: Indicates whether the AWS Control Tower Execution role should be created in the Management Account.
+    Type: String
 Resources:
   rOrgIdGdLambdaCustomResource:
     Type: Custom::LambdaCustomResource
@@ -717,6 +729,7 @@ Resources:
         pLambdaLogLevel: !Ref pLambdaLogLevel
         pRegionLinkingMode: !Ref pRegionLinkingMode
         pSRAAlarmEmail: !Ref pSRAAlarmEmail
+        pCreateAWSControlTowerExecutionRole: !Ref pCreateAWSControlTowerExecutionRole
       Tags:
         - Key: sra-solution
           Value: !Ref pSRAStagingS3KeyPrefix
@@ -739,6 +752,7 @@ Resources:
         pEnableLambdaNetworkLogs: !Ref pEnableLambdaNetworkLogs
         pGuardDutyFindingPublishingFrequency: !Ref pGuardDutyFindingPublishingFrequency
         pSRAAlarmEmail: !Ref pSRAAlarmEmail
+        pCreateAWSControlTowerExecutionRole: !Ref pCreateAWSControlTowerExecutionRole
       Tags:
         - Key: sra-solution
           Value: !Ref pSRAStagingS3KeyPrefix

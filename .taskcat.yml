@@ -18,3 +18,4 @@ tests:
       LaceworkAccessKeyID: $[taskcat_ssm_/lacework/LaceworkAccessKeyID]
       LaceworkSecretKey: $[taskcat_ssm_/lacework/LaceworkSecretKey]
       pDisableGuardDuty: 'Yes'
+      pCreateAWSControlTowerExecutionRole: 'true'
