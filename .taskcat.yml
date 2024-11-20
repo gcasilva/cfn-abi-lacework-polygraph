@@ -18,8 +18,4 @@ tests:
       LaceworkAccessKeyID: $[taskcat_ssm_/lacework/LaceworkAccessKeyID]
       LaceworkSecretKey: $[taskcat_ssm_/lacework/LaceworkSecretKey]
       pDisableGuardDuty: 'Yes'
-      pControlTower: 'true'
-      pGovernedRegions: ct-regions
-      pSecurityAccountId: $[taskcat_ssm_/sra/control-tower/audit-account-id]
-      pLogArchiveAccountId: $[taskcat_ssm_/sra/control-tower/log-archive-account-id]
       pCreateAWSControlTowerExecutionRole: 'true'

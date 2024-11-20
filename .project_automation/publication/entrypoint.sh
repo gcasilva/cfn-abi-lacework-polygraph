@@ -17,7 +17,6 @@ REPO_NAME=$(git config --get remote.origin.url | cut -d '/' -f5 | cut -d '.' -f1
 VERSION=$(cat VERSION)
 
 BASE_URL="this would be the path to s3 bucket/${REPO_NAME}/"
-
 S3_URI="s3://aws-abi/guide/${REPO_NAME}/"
 
 
@@ -29,20 +28,21 @@ else
   gh release create ${VERSION} --target ${BRANCH} --generate-notes
 fi
 
-#print_header() {
-#  printf "\n\n%s\n" "$*"
-#}
+print_header() {
+  printf "\n\n%s\n" "$*"
+}
 
 sed -i 's/href=.*$/href="#">/' ${PROJECT_PATH}/guide/layouts/partials/logo.html
 
 print_header 'Building site...'
 cd ${PROJECT_PATH}/guide
 hugo --verbose --debug
-#print_header 'Publishing...'
-#aws s3 sync --delete "${PUBLIC_PATH}" "${S3_URI}" --acl public-read
 
-#print_header 'Listing uploaded content...'
-#aws s3 ls --recursive --human-readable --summarize "${S3_URI}"
+print_header 'Publishing...'
+aws s3 sync --delete "${PUBLIC_PATH}" "${S3_URI}" --acl public-read
+
+print_header 'Listing uploaded content...'
+aws s3 ls --recursive --human-readable --summarize "${S3_URI}"
 
 printf "\nPublished at ${BASE_URL}\n"
 
@@ -59,4 +59,3 @@ taskcat upload --bucket-name aws-abi --object-acl public-read
 # else
 #   echo "Local build mode (skipping publication)"
 # fi
-
