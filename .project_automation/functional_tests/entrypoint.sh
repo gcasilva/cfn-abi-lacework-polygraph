@@ -37,6 +37,7 @@ run_test() {
 }
 # Run taskcat e2e test
 run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
+run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping-sra-enabled"
 
 ## Executing ash tool
 
