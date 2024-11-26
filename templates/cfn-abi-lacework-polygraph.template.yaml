@@ -734,6 +734,8 @@ Resources:
   CfnAbiAwsSecurityHub:
     Type: AWS::CloudFormation::Stack
     Condition: cEnableSecurityHub
+    Metadata:
+      StackName: !Ref 'AWS::StackName'
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/submodules/aws-security-reference-architecture-examples/aws_sra_examples/modules/securityhub-org-module/templates/sra-securityhub-org-module-main.yaml"
       Parameters:
@@ -758,6 +760,11 @@ Resources:
   CfnAbiAmazonGuardDuty:
     Type: AWS::CloudFormation::Stack
     Condition: cEnableGuardDuty
+    Metadata:
+      DependsOnSecurityHub: !If
+        - cEnableSecurityHub
+        - !Ref CfnAbiAwsSecurityHub
+        - !Ref 'AWS::NoValue'
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/submodules/aws-security-reference-architecture-examples/aws_sra_examples/modules/guardduty-org-module/templates/sra-guardduty-org-module-main.yaml"
       Parameters:
