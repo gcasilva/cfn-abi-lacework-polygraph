@@ -53,7 +53,7 @@ fi
 
 
 
-## Executing ash tool
+## Executing ash tool #
 
 #find ${PROJECT_PATH} -name lambda.zip -exec rm -rf {} \;
 
