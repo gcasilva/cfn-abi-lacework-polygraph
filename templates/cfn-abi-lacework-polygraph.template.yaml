@@ -35,6 +35,7 @@ Metadata:
       - Label:
           default: Security Hub Configuration Properties
         Parameters:
+          - pConfigureSecurityHub
           - pDisableSecurityHub
           - pEnableSecurityBestPracticesStandard
           - pEnableCISStandard
@@ -44,6 +45,7 @@ Metadata:
       - Label:
           default: GuardDuty Configuration Properties
         Parameters:
+          - pConfigureGuardDuty
           - pDisableGuardDuty
           - pAutoEnableS3Logs
           - pAutoEnableKubernetesAuditLogs
@@ -65,6 +67,7 @@ Metadata:
         Parameters:
           - pComplianceFrequency
       - Label:
+
           default: Advanced Configuration Properties
         Parameters:
           - pControlTower
@@ -74,6 +77,11 @@ Metadata:
           - pCreateAWSControlTowerExecutionRole
           - pAdminRoleName
           - pExecRoleName
+
+          default: Landing Zone
+        Parameters:
+          - pCreateAWSControlTowerExecutionRole
+
 
     ParameterLabels:
       # General Properties
@@ -113,6 +121,8 @@ Metadata:
       KMSKeyIdentifierARN:
         default: KMS Key Identifier ARN for CloudTrail S3 Logs Decrypt
       # Security Hub Configuration Properties
+      pConfigureSecurityHub:
+        default: Enable Security Hub at Organization level
       pDisableSecurityHub:
         default: Disable Security Hub
       pEnableSecurityBestPracticesStandard:
@@ -126,6 +136,8 @@ Metadata:
       pRegionLinkingMode:
         default: Region Linking Mode
       # GuardDuty Configuration Properties
+      pConfigureGuardDuty:
+        default: Enable GuardDuty at Organization level 
       pDisableGuardDuty:
         default: Disable GuardDuty in all accounts and regions before deleting the stack
       pAutoEnableS3Logs:
@@ -156,6 +168,7 @@ Metadata:
       # EventBridge Rule Properties
       pComplianceFrequency:
         default: Frequency to Check for Organizational Compliance
+
       # Advanced Configuration Properties
       pControlTower:
         default: pControlTower
@@ -165,6 +178,11 @@ Metadata:
         default: pSecurityAccountId
       pLogArchiveAccountId:
         default: pLogArchiveAccountId
+
+      # Landing Zone
+      pCreateAWSControlTowerExecutionRole:
+        default: AWS Control Tower Execution Role creation parameter
+
 Parameters:
   # General Properties
   pSRASourceS3BucketName:
@@ -266,6 +284,11 @@ Parameters:
     Type: String
     MaxLength: '256'
   # SecurityHub Configuration Properties
+  pConfigureSecurityHub:
+    AllowedValues: ['Yes', 'No']
+    Default: 'No'
+    Description: Enable Security Hub at Organization level.
+    Type: String
   pDisableSecurityHub:
     AllowedValues: ['Yes', 'No']
     Default: 'No'
@@ -299,6 +322,11 @@ Parameters:
       aggregate findings from new Regions as Security Hub supports them and you opt into them.
     Type: String
   # GuardDuty Configuration Properties
+  pConfigureGuardDuty:
+    AllowedValues: ['Yes', 'No']
+    Default: 'No'
+    Description: Enable GuardDuty at Organization level.
+    Type: String
   pDisableGuardDuty:
     AllowedValues: ['Yes', 'No']
     Default: 'No'
@@ -378,6 +406,7 @@ Parameters:
     MinValue: 1
     MaxValue: 30
     Type: Number
+
   # Advanced Configuration Properties
   pControlTower:
     AllowedValues: ['true', 'false']
@@ -420,6 +449,18 @@ Parameters:
   
 Conditions:
   cControlTowerEnabled: !Equals [!Ref pControlTower, 'true']
+
+  # Landing Zone
+  pCreateAWSControlTowerExecutionRole:
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+    Description: Indicates whether the AWS Control Tower Execution role should be created in the Management Account.
+    Type: String
+
+Conditions:
+  cEnableGuardDuty: !Equals [!Ref pConfigureGuardDuty, 'Yes']
+  cEnableSecurityHub: !Equals [!Ref pConfigureSecurityHub, 'Yes']
+
 
 Resources:
   rOrgIdGdLambdaCustomResource:
@@ -775,6 +816,9 @@ Resources:
 
   CfnAbiAwsSecurityHub:
     Type: AWS::CloudFormation::Stack
+    Condition: cEnableSecurityHub
+    Metadata:
+      StackName: !Ref 'AWS::StackName'
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/submodules/aws-security-reference-architecture-examples/aws_sra_examples/modules/securityhub-org-module/templates/sra-securityhub-org-module-main.yaml"
       Parameters:
@@ -793,17 +837,24 @@ Resources:
         pRegionLinkingMode: !Ref pRegionLinkingMode
         pSRAAlarmEmail: !Ref pSRAAlarmEmail
         pCreateAWSControlTowerExecutionRole: !Ref pCreateAWSControlTowerExecutionRole
+
         pControlTower: !Ref pControlTower
         pGovernedRegions: !Ref pGovernedRegions
         pSecurityAccountId: !Ref pSecurityAccountId
         pLogArchiveAccountId: !Ref pLogArchiveAccountId
+
+
       Tags:
         - Key: sra-solution
           Value: !Ref pSRAStagingS3KeyPrefix
   CfnAbiAmazonGuardDuty:
     Type: AWS::CloudFormation::Stack
-    DependsOn:
-         - "CfnAbiAwsSecurityHub"
+    Condition: cEnableGuardDuty
+    Metadata:
+      DependsOnSecurityHub: !If
+        - cEnableSecurityHub
+        - !Ref CfnAbiAwsSecurityHub
+        - !Ref 'AWS::NoValue'
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/submodules/aws-security-reference-architecture-examples/aws_sra_examples/modules/guardduty-org-module/templates/sra-guardduty-org-module-main.yaml"
       Parameters:
@@ -819,10 +870,14 @@ Resources:
         pEnableLambdaNetworkLogs: !Ref pEnableLambdaNetworkLogs
         pGuardDutyFindingPublishingFrequency: !Ref pGuardDutyFindingPublishingFrequency
         pSRAAlarmEmail: !Ref pSRAAlarmEmail
+
         pControlTower: !Ref pControlTower
         pGovernedRegions: !Ref pGovernedRegions
         pSecurityAccountId: !Ref pSecurityAccountId
         pLogArchiveAccountId: !Ref pLogArchiveAccountId
+
+        pCreateAWSControlTowerExecutionRole: !Ref pCreateAWSControlTowerExecutionRole
+
       Tags:
         - Key: sra-solution
           Value: !Ref pSRAStagingS3KeyPrefix
@@ -830,8 +885,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - LaceworkControlTowerCfn
-      - CfnAbiAwsSecurityHub
-      - CfnAbiAmazonGuardDuty
     Properties:
       TemplateURL: !Sub "https://${pSRASourceS3BucketName}.s3.${pSRAS3BucketRegion}.${AWS::URLSuffix}/${pSRAStagingS3KeyPrefix}/templates/cfn-abi-lacework-sec-hub-ingest.template.yaml"
       Parameters:

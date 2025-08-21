@@ -37,6 +37,7 @@ run_test() {
     #.project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 
+
 # if account id is xxxx do this
 if [ "$AWS_ACCOUNT_ID" == ${NON_CT_ENV} ]; then
     # Run taskcat e2e test for Non-Control Tower environment
@@ -46,6 +47,13 @@ else
     echo "Account ID: $AWS_ACCOUNT_ID"
     run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
 fi
+
+# Run taskcat e2e test
+run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
+run_test "cfn-abi-lacework-polygraph-multi-org-sra-enabled"
+run_test "cfn-abi-lacework-polygraph-multi-org-sra-gdonly"
+run_test "cfn-abi-lacework-polygraph-multi-org-sra-shonly"
+
 
 ## Executing ash tool
 
