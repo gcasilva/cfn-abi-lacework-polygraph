@@ -46,13 +46,11 @@ else
     # Run taskcat e2e test for Control Tower environment
     echo "Account ID: $AWS_ACCOUNT_ID"
     run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
+    run_test "cfn-abi-lacework-polygraph-multi-org-sra-enabled"
+    run_test "cfn-abi-lacework-polygraph-multi-org-sra-gdonly"
+    run_test "cfn-abi-lacework-polygraph-multi-org-sra-shonly"
 fi
 
-# Run taskcat e2e test
-run_test "cfn-abi-lacework-polygraph-multi-org-multi-sub-mapping"
-run_test "cfn-abi-lacework-polygraph-multi-org-sra-enabled"
-run_test "cfn-abi-lacework-polygraph-multi-org-sra-gdonly"
-run_test "cfn-abi-lacework-polygraph-multi-org-sra-shonly"
 
 
 ## Executing ash tool
