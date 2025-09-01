@@ -6,6 +6,11 @@
     },
     {
         "Type" : "S3_BUCKET",
+        "Filter" : "sra-org-trail-logs-",
+        "Account" : "log_account"
+    },
+    {
+        "Type" : "S3_BUCKET",
         "Filter" : "cfn-abi-amazon-guardduty-"
     },
     {
@@ -115,6 +120,10 @@
     },
     {
         "Type" : "LOG_GROUP",
+        "Filter" : "sra/sra-org-trail"
+    },
+    {
+        "Type" : "LOG_GROUP",
         "Filter" : "/aws/lambda/sra-gd-s3",
         "Account" : "log_account"
     },
@@ -171,6 +180,14 @@
     {
         "Type" : "STACK_SET",
         "Filter" : "sra-guardduty-org-delivery-s3-bucket"
+    },
+    {
+        "Type" : "STACK_SET",
+        "Filter" : "sra-common-prerequisites-secrets-kms"
+    },
+    {
+        "Type" : "STACK_SET",
+        "Filter" : "sra-cloudtrail-org-kms"
     },
     {
         "Type" : "STACK_SET",
