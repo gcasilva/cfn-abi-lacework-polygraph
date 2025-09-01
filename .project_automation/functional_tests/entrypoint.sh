@@ -33,7 +33,7 @@ run_test() {
     echo $AWS_DEFAULT_REGION
     unset AWS_DEFAULT_REGION
     echo $AWS_DEFAULT_REGION
-    taskcat test run -t $1
+    taskcat -d test run -n -t $1
     #.project_automation/functional_tests/scoutsuite/scoutsuite.sh
 }
 
@@ -49,11 +49,12 @@ else
     run_test "cfn-abi-lacework-polygraph-multi-org-sra-enabled"
     run_test "cfn-abi-lacework-polygraph-multi-org-sra-gdonly"
     run_test "cfn-abi-lacework-polygraph-multi-org-sra-shonly"
+    run_test "cfn-abi-lacework-polygraph-multi-org-sra-cloudtrailonly"
 fi
 
 
 
-## Executing ash tool #
+## Executing ash tool
 
 #find ${PROJECT_PATH} -name lambda.zip -exec rm -rf {} \;
 
