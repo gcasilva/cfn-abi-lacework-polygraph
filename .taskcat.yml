@@ -17,8 +17,11 @@ tests:
       LaceworkAccountName: $[taskcat_ssm_/lacework/LaceworkAccountName]
       LaceworkAccessKeyID: $[taskcat_ssm_/lacework/LaceworkAccessKeyID]
       LaceworkSecretKey: $[taskcat_ssm_/lacework/LaceworkSecretKey]
-      pDisableGuardDuty: 'Yes'
       KMSKeyIdentifierARN: $[taskcat_ssm_/lacework/CloudTrailKMSARN]
+      pConfigureGuardDuty: 'Yes'
+      pDisableGuardDuty: 'Yes'
+      pConfigureSecurityHub: 'Yes'
+      pDisableSecurityHub: 'Yes'
   cfn-abi-lacework-polygraph-non-controltower:
     regions:
       - us-east-1
@@ -30,7 +33,10 @@ tests:
       LaceworkAccountName: $[taskcat_ssm_/lacework/LaceworkAccountName]
       LaceworkAccessKeyID: $[taskcat_ssm_/lacework/LaceworkAccessKeyID]
       LaceworkSecretKey: $[taskcat_ssm_/lacework/LaceworkSecretKey]
+      pConfigureGuardDuty: 'Yes'
       pDisableGuardDuty: 'Yes'
+      pConfigureSecurityHub: 'Yes'
+      pDisableSecurityHub: 'Yes'
       pCreateAWSControlTowerExecutionRole: 'false'
       pCreateSRAOrgTrail: 'Yes'
       pControlTower: 'false'
@@ -51,6 +57,7 @@ tests:
       pDisableGuardDuty: 'Yes'
       pCreateAWSControlTowerExecutionRole: 'true'
       pConfigureGuardDuty: 'Yes'
+      pDisableGuardDuty: 'Yes'
       pConfigureSecurityHub: 'Yes'
       pDisableSecurityHub: 'Yes'
   cfn-abi-lacework-polygraph-multi-org-sra-gdonly:
