@@ -6,8 +6,7 @@
     },
     {
         "Type" : "S3_BUCKET",
-        "Filter" : "sra-org-trail-logs-",
-        "Account" : "log_account"
+        "Filter" : "sra-org-trail-logs-"
     },
     {
         "Type" : "S3_BUCKET",
